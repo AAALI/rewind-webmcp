@@ -41,6 +41,46 @@ await rewind.connectWebMCP();
 
 The SDK provides automatic commits, deterministic state hashes, local persistence, restore, branch-on-retry, an on-demand history drawer, and built-in `rewind_history` and `rewind_restore` WebMCP tools.
 
+## SDK hosting
+
+The SDK is published as **`@rewind/webmcp`** and is also available as a single-file ESM bundle from the deployed site.
+
+| Source | URL / command |
+|--------|---------------|
+| npm package | `npm install @rewind/webmcp` |
+| ESM bundle | `https://rewind-webmcp.netlify.app/sdk/rewind-sdk.mjs` |
+| Panel bundle | `https://rewind-webmcp.netlify.app/sdk/rewind-sdk-panel.mjs` |
+
+The ESM bundle is generated during `npm run build` and copied into `dist/sdk/`, so Netlify serves it alongside the website.
+
+## Deploy
+
+The site is configured for **Netlify**. Connect the repo and set the build command:
+
+```bash
+npm run build
+```
+
+Publish directory: `dist`.
+
+Set these environment variables in the Netlify UI:
+
+- `OPENAI_API_KEY` — server key used by `/.netlify/functions/copilot` to plan agent tool calls.
+- `OPENAI_MODEL` — optional, defaults to `gpt-5.4-mini`.
+
+The catalog demo is a client-side app, so `netlify.toml` rewrites `/examples/catalog/*` to `/examples/catalog/index.html` and falls back to `/index.html` for the landing page. Existing files (such as `/sdk/*.mjs`) are served first.
+
+## Publish the SDK to npm
+
+Releases are published automatically by `.github/workflows/publish-sdk.yml` when you publish a GitHub Release. Add an `NPM_TOKEN` secret to the repository first.
+
+To publish manually:
+
+```bash
+npm run build:sdk
+npm publish --workspace packages/rewind-sdk --access public
+```
+
 ## Verify
 
 ```bash

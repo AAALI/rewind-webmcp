@@ -1,6 +1,11 @@
 node_modules/
 dist/
+sdk-dist/
 *.tsbuildinfo
+
+# Build artifacts generated from vite.config.ts
+vite.config.js
+/*.d.ts
 
 .env
 .env.*

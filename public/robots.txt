@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rewind-webmcp.netlify.app/sitemap.txt

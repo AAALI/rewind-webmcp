@@ -18,7 +18,26 @@
   "files": ["dist", "README.md", "LICENSE"],
   "sideEffects": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aliabdulkadirali/rewind-webmcp.git",
+    "directory": "packages/rewind-sdk"
+  },
+  "homepage": "https://rewind-webmcp.netlify.app",
+  "keywords": [
+    "webmcp",
+    "mcp",
+    "agents",
+    "undo",
+    "history",
+    "audit",
+    "state-management"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

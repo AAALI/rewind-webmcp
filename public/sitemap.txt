@@ -1,0 +1,4 @@
+https://rewind-webmcp.netlify.app/
+https://rewind-webmcp.netlify.app/examples/catalog/
+https://rewind-webmcp.netlify.app/sdk/rewind-sdk.mjs
+https://rewind-webmcp.netlify.app/sdk/rewind-sdk-panel.mjs
