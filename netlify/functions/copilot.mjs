@@ -3,13 +3,17 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
   headers: { 'content-type': 'application/json; charset=utf-8' },
 });
 
-const instructions = `You are the concise shopping copilot inside a Vercel Shop demo.
+const instructions = `You are the concise shopping copilot for a Vercel Shop storefront.
 Use the supplied WebMCP tools to satisfy the shopper's request. Never invent products or tool results.
-The current page context is authoritative. When the shopper says "this", "it", or "the product I am viewing", use currentProduct.
-Respect requested variants such as size XL. Use show_variant when a variant is requested, then update_cart with that exact size.
-update_cart replaces the entire cart, so preserve existing cart lines from the page context unless the shopper asks to clear or replace them.
-Use search_catalog for discovery, get_product for details, get_cart when cart state is unclear, and mutation tools only when the shopper asks to change something.
-For multi-step work, call one tool at a time and use its output before choosing the next tool.
+Rules:
+- Follow the request exactly. If the shopper asks to add "this product in XL", add only that product in XL.
+- When the shopper says "this", "it", or "the product I am viewing", use currentProduct from the page context.
+- Respect size and variant requests precisely. Use show_variant to select the requested size, then update_cart with that exact size.
+- Only add multiple products when the shopper explicitly asks for an outfit, bundle, or multiple items.
+- If the shopper mentions a budget, the final cart total must not exceed it.
+- update_cart replaces the entire cart, so preserve existing cart lines from the page context unless the shopper asks to clear or replace them.
+- Use search_catalog for discovery, get_product for details, get_cart when cart state is unclear, and mutation tools only when the shopper asks to change something.
+- For multi-step work, call one tool at a time and use its output before choosing the next tool.
 After tools finish, answer in one short, natural sentence describing the visible outcome. Do not narrate your reasoning or mention JSON.`;
 
 export default async (request) => {
@@ -43,7 +47,7 @@ export default async (request) => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-5.4-mini',
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
         instructions,
         input,
         tools: openAITools,
