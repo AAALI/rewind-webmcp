@@ -1,4 +1,11 @@
-type RegisteredTool = { name: string; description: string; origin?: string };
+type RegisteredTool = {
+  name: string;
+  description: string;
+  inputSchema?: Record<string, unknown>;
+  annotations?: { readOnlyHint?: boolean };
+  origin?: string;
+};
+
 type ModelContext = {
   getTools: () => Promise<RegisteredTool[]>;
   executeTool: (tool: RegisteredTool, input: Record<string, unknown>) => Promise<string | null>;
@@ -6,55 +13,81 @@ type ModelContext = {
 
 export type CopilotStep = { role: 'user' | 'agent'; text: string; tools?: string[] };
 
-function parseResult<T>(value: string | null): T {
-  if (!value) return [] as T;
-  const first = JSON.parse(value) as unknown;
-  return (typeof first === 'string' ? JSON.parse(first) : first) as T;
+export type CopilotPageContext = {
+  page: string;
+  currentProduct: { id: string; name: string; color: string; price: number } | null;
+  selectedSize: string | null;
+  cart: Array<{ productId: string; quantity: number; size?: string }>;
+  cartTotal: number;
+};
+
+type PlannerCall = { callId: string; name: string; arguments: Record<string, unknown> };
+type PlannerResponse = { responseId?: string; text?: string; calls?: PlannerCall[]; error?: string };
+
+async function askPlanner(body: Record<string, unknown>): Promise<PlannerResponse> {
+  const response = await fetch('/.netlify/functions/copilot', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const result = await response.json() as PlannerResponse;
+  if (!response.ok) throw new Error(result.error ?? 'The AI planner is unavailable.');
+  return result;
 }
 
-export async function runCopilot(prompt: string): Promise<CopilotStep> {
+export async function runCopilot(prompt: string, pageContext: CopilotPageContext): Promise<CopilotStep> {
   const context = (document as Document & { modelContext?: ModelContext }).modelContext;
   if (!context?.getTools || !context.executeTool) {
     throw new Error('This browser does not expose in-page WebMCP discovery and execution.');
   }
+
   const tools = await context.getTools();
-  const byName = (name: string) => {
-    const tool = tools.find((item) => item.name === name);
-    if (!tool) throw new Error(`${name} is not available on this page.`);
-    return tool;
-  };
-  const lower = prompt.toLowerCase();
+  const siteTools = tools.filter((tool) => !tool.name.startsWith('rewind_'));
+  const usedTools: string[] = [];
+  let previousResponseId: string | undefined;
+  let toolOutputs: Array<{ callId: string; output: string }> | undefined;
 
-  if (/return|exchange|shipping|delivery/.test(lower)) {
-    const raw = await context.executeTool(byName('search_shop_policies_and_faqs'), { query: prompt });
-    const result = parseResult<{ answer: string }>(raw);
-    return { role: 'agent', text: result.answer, tools: ['search_shop_policies_and_faqs'] };
-  }
-  if (/orders?|tracking/.test(lower)) {
-    await context.executeTool(byName('manage_orders'), {});
-    return { role: 'agent', text: 'I opened your order history and tracking.', tools: ['manage_orders'] };
-  }
-  if (/checkout|pay now/.test(lower)) {
-    const raw = await context.executeTool(byName('proceed_to_checkout'), {});
-    const result = parseResult<{ ok: boolean; reason?: string }>(raw);
-    return { role: 'agent', text: result.ok ? 'I opened checkout with your current cart.' : result.reason ?? 'Checkout is not available.', tools: ['proceed_to_checkout'] };
-  }
-  if (/clear|empty|remove everything/.test(lower)) {
-    await context.executeTool(byName('cancel_cart'), {});
-    return { role: 'agent', text: 'I cleared the cart.', tools: ['cancel_cart'] };
+  for (let turn = 0; turn < 5; turn += 1) {
+    const plan = await askPlanner({
+      prompt,
+      pageContext,
+      tools: siteTools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
+        readOnly: tool.annotations?.readOnlyHint === true,
+      })),
+      previousResponseId,
+      toolOutputs,
+    });
+    if (plan.error) throw new Error(plan.error);
+
+    const calls = plan.calls ?? [];
+    if (!calls.length) {
+      return {
+        role: 'agent',
+        text: plan.text?.trim() || (usedTools.length ? 'Done.' : 'I need a little more detail to help with that.'),
+        tools: usedTools,
+      };
+    }
+
+    previousResponseId = plan.responseId;
+    toolOutputs = [];
+    for (const call of calls) {
+      const tool = siteTools.find((item) => item.name === call.name);
+      if (!tool) {
+        toolOutputs.push({ callId: call.callId, output: JSON.stringify({ error: `${call.name} is not available on this page.` }) });
+        continue;
+      }
+      usedTools.push(call.name);
+      try {
+        const output = await context.executeTool(tool, call.arguments);
+        toolOutputs.push({ callId: call.callId, output: output ?? JSON.stringify({ ok: true }) });
+      } catch (error) {
+        toolOutputs.push({ callId: call.callId, output: JSON.stringify({ error: error instanceof Error ? error.message : 'Tool execution failed.' }) });
+      }
+    }
   }
 
-  const budget = Number(lower.match(/(?:under|below|budget(?: of)?)\s*\$?(\d+)/)?.[1] ?? 200);
-  const color = ['black', 'pink', 'grey', 'gray', 'white', 'orange', 'yellow', 'blue'].find((value) => lower.includes(value));
-  const catalogRaw = await context.executeTool(byName('search_catalog'), { query: color ?? '', max_price: budget, navigate: /find|show|search/.test(lower) });
-  const matches = parseResult<Array<{ id: string; name: string; price: number }>>(catalogRaw);
-  if (/find|show|search/.test(lower) && !/add|cart|outfit|build|put together/.test(lower)) {
-    return { role: 'agent', text: `I found ${matches.length} matching products: ${matches.slice(0, 3).map((item) => `${item.name} ($${item.price})`).join(', ')}.`, tools: ['search_catalog'] };
-  }
-  await context.executeTool(byName('update_cart'), { items: matches.map((item) => ({ product_id: item.id, quantity: 1 })) });
-  return {
-    role: 'agent',
-    text: `I found ${matches.length} products under $${budget} each and added them to your cart.`,
-    tools: ['search_catalog', 'update_cart'],
-  };
+  return { role: 'agent', text: 'I stopped after five tool steps so you stay in control.', tools: usedTools };
 }

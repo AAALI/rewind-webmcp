@@ -1,5 +1,5 @@
 export type Product = { id: string; name: string; price: number; image: string; color: string; category: string; description: string };
-export type CartLine = { productId: string; quantity: number };
+export type CartLine = { productId: string; quantity: number; size?: string };
 export type ShopState = { cart: CartLine[]; budget: number; lastChangedBy: 'shopper' | 'agent' };
 
 const cdn = 'https://cdn.shopify.com/s/files/1/0748/3002/0662/files/';
