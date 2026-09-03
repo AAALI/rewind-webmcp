@@ -1,4 +1,4 @@
-https://rewind-webmcp.netlify.app/
-https://rewind-webmcp.netlify.app/examples/catalog/
-https://rewind-webmcp.netlify.app/sdk/rewind-sdk.mjs
-https://rewind-webmcp.netlify.app/sdk/rewind-sdk-panel.mjs
+https://rewind-webmcp.vercel.app/
+https://rewind-webmcp.vercel.app/examples/catalog/
+https://rewind-webmcp.vercel.app/sdk/rewind-sdk.mjs
+https://rewind-webmcp.vercel.app/sdk/rewind-sdk-panel.mjs

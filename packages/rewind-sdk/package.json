@@ -23,7 +23,7 @@
     "url": "git+https://github.com/aliabdulkadirali/rewind-webmcp.git",
     "directory": "packages/rewind-sdk"
   },
-  "homepage": "https://rewind-webmcp.netlify.app",
+  "homepage": "https://rewind-webmcp.vercel.app",
   "keywords": [
     "webmcp",
     "mcp",

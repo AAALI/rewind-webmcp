@@ -48,27 +48,27 @@ The SDK is published as **`@rewind/webmcp`** and is also available as a single-f
 | Source | URL / command |
 |--------|---------------|
 | npm package | `npm install @rewind/webmcp` |
-| ESM bundle | `https://rewind-webmcp.netlify.app/sdk/rewind-sdk.mjs` |
-| Panel bundle | `https://rewind-webmcp.netlify.app/sdk/rewind-sdk-panel.mjs` |
+| ESM bundle | `https://rewind-webmcp.vercel.app/sdk/rewind-sdk.mjs` |
+| Panel bundle | `https://rewind-webmcp.vercel.app/sdk/rewind-sdk-panel.mjs` |
 
-The ESM bundle is generated during `npm run build` and copied into `dist/sdk/`, so Netlify serves it alongside the website.
+The ESM bundle is generated during `npm run build` and copied into `dist/sdk/`, so Vercel serves it alongside the website.
 
 ## Deploy
 
-The site is configured for **Netlify**. Connect the repo and set the build command:
+The site is configured for **Vercel**. Connect the repo and set the build command:
 
 ```bash
 npm run build
 ```
 
-Publish directory: `dist`.
+Output directory: `dist`.
 
-Set these environment variables in the Netlify UI:
+Set these environment variables in the Vercel project dashboard:
 
-- `OPENAI_API_KEY` — server key used by `/.netlify/functions/copilot` to plan agent tool calls.
+- `OPENAI_API_KEY` — server key used by `/api/copilot` to plan agent tool calls.
 - `OPENAI_MODEL` — optional, defaults to `gpt-4o-mini`.
 
-The catalog demo is a client-side app, so `netlify.toml` rewrites `/examples/catalog/*` to `/examples/catalog/index.html` and falls back to `/index.html` for the landing page. Existing files (such as `/sdk/*.mjs`) are served first.
+The catalog demo is a client-side app, so `vercel.json` rewrites `/examples/catalog/*` to `/examples/catalog/index.html` and falls back to `/index.html` for the landing page. Existing files (such as `/sdk/*.mjs`) are served first.
 
 ## Publish the SDK to npm
 

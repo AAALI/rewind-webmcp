@@ -8,7 +8,7 @@ type RegisteredTool = {
 
 type ModelContext = {
   getTools: () => Promise<RegisteredTool[]>;
-  executeTool: (tool: RegisteredTool, input: Record<string, unknown>) => Promise<string | null>;
+  executeTool: (tool: RegisteredTool, input: Record<string, unknown> | string) => Promise<unknown>;
 };
 
 export type CopilotStep = { role: 'user' | 'agent'; text: string; tools?: string[] };
@@ -24,8 +24,26 @@ export type CopilotPageContext = {
 type PlannerCall = { callId: string; name: string; arguments: Record<string, unknown> };
 type PlannerResponse = { responseId?: string; text?: string; calls?: PlannerCall[]; error?: string };
 
+function serializeToolOutput(value: unknown): string {
+  if (value === null || value === undefined) return JSON.stringify({ ok: true });
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    if (Array.isArray(record.content)) {
+      const text = record.content
+        .filter((part): part is { type: string; text?: string } => typeof part === 'object' && part !== null)
+        .filter((part) => part.type === 'text' && typeof part.text === 'string')
+        .map((part) => part.text as string)
+        .join('\n');
+      if (text) return text;
+    }
+    try { return JSON.stringify(value); } catch { return String(value); }
+  }
+  return String(value);
+}
+
 async function askPlanner(body: Record<string, unknown>): Promise<PlannerResponse> {
-  const response = await fetch('/.netlify/functions/copilot', {
+  const response = await fetch('/api/copilot', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
@@ -47,7 +65,7 @@ export async function runCopilot(prompt: string, pageContext: CopilotPageContext
   let previousResponseId: string | undefined;
   let toolOutputs: Array<{ callId: string; output: string }> | undefined;
 
-  for (let turn = 0; turn < 5; turn += 1) {
+  for (let turn = 0; turn < 8; turn += 1) {
     const plan = await askPlanner({
       prompt,
       pageContext,
@@ -81,13 +99,19 @@ export async function runCopilot(prompt: string, pageContext: CopilotPageContext
       }
       usedTools.push(call.name);
       try {
-        const output = await context.executeTool(tool, call.arguments);
-        toolOutputs.push({ callId: call.callId, output: output ?? JSON.stringify({ ok: true }) });
+        const argsJson = JSON.stringify(call.arguments ?? {});
+        let output: unknown;
+        try {
+          output = await context.executeTool(tool, argsJson);
+        } catch {
+          output = await context.executeTool(tool, call.arguments);
+        }
+        toolOutputs.push({ callId: call.callId, output: serializeToolOutput(output) });
       } catch (error) {
         toolOutputs.push({ callId: call.callId, output: JSON.stringify({ error: error instanceof Error ? error.message : 'Tool execution failed.' }) });
       }
     }
   }
 
-  return { role: 'agent', text: 'I stopped after five tool steps so you stay in control.', tools: usedTools };
+  return { role: 'agent', text: 'I stopped after several tool steps so you stay in control.', tools: usedTools };
 }

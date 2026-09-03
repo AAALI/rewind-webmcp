@@ -1,4 +1,4 @@
-import { ArrowRight, GitBranch, History, RotateCcw } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import './styles.css';
 
 const LedgerMark = () => (
@@ -6,26 +6,6 @@ const LedgerMark = () => (
     <path d="M5 4.5h6M5 10h10M5 15.5h6" />
     <circle cx="3" cy="4.5" r="1.2" fill="#fff" stroke="none" />
     <circle cx="17" cy="15.5" r="1.2" fill="#fff" stroke="none" />
-  </svg>
-);
-
-const ToolsIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-  </svg>
-);
-
-const GlobeIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="2" y1="12" x2="22" y2="12" />
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-  </svg>
-);
-
-const ShieldIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
 
@@ -39,9 +19,9 @@ function App() {
         </a>
         <div>
           <a href="#webmcp">WebMCP</a>
-          <a href="#product">Product</a>
+          <a href="#why">Why</a>
           <a href="#sdk">SDK</a>
-          <a className="demo-link" href="/examples/catalog/">
+          <a className="button button--small" href="/examples/catalog/">
             Shopify demo <ArrowRight size={13} />
           </a>
         </div>
@@ -49,29 +29,19 @@ function App() {
 
       <main>
         <section className="hero">
-          <div>
-            <p className="kicker">Open SDK for WebMCP</p>
-            <h1>
-              Undo for the
-              <br />
-              <span className="accent-text">agentic web.</span>
-            </h1>
-            <p className="lead">
-              WebMCP gives websites typed tools that browser agents can call directly. Rewind is the drop-in SDK that records every agent mutation and lets people rewind a mistake at the exact place it appears — no new prompt required.
-            </p>
-            <div className="actions">
-              <a className="primary" href="/examples/catalog/">
-                See the Shopify cart demo <ArrowRight size={15} />
-              </a>
-              <a href="#webmcp">What is WebMCP?</a>
-            </div>
-            <aside className="browser-note">
-              <strong>Use a WebMCP-enabled browser.</strong>
-              <span>
-                In Chrome 146+, open <code>chrome://flags/#enable-webmcp-testing</code>, set it to Enabled, then relaunch Chrome.
-              </span>
-            </aside>
+          <h1>Undo for the agentic web.</h1>
+          <p className="hero-lead">
+            WebMCP gives websites typed tools that browser agents can call directly. Rewind records every agent mutation so people can rewind a mistake at the exact place it appears — no new prompt required.
+          </p>
+          <div className="hero-actions">
+            <a className="button" href="/examples/catalog/">
+              See the Shopify cart demo <ArrowRight size={14} />
+            </a>
+            <a href="#webmcp">Read about WebMCP</a>
           </div>
+          <p className="hero-note">
+            Use a WebMCP-enabled browser. In Chrome 146+, enable <code>chrome://flags/#enable-webmcp-testing</code> and relaunch.
+          </p>
 
           <div className="recovery-preview">
             <div className="preview-head">
@@ -90,7 +60,7 @@ function App() {
               <button>Undo agent changes</button>
             </div>
             <div className="line">
-              <i />
+              <img src="https://cdn.shopify.com/s/files/1/0748/3002/0662/files/briskrun-jacket-unisex-88b464-main-grey.png?v=1787661204" alt="BriskRun Jacket" />
               <div>
                 <strong>BriskRun Jacket</strong>
                 <small>Grey · Qty 1</small>
@@ -98,7 +68,7 @@ function App() {
               <b>$157.00</b>
             </div>
             <div className="line">
-              <i />
+              <img src="https://cdn.shopify.com/s/files/1/0748/3002/0662/files/orbitproof-sweatshirt-youth-2226d1-main-white.png?v=1787411729" alt="OrbitProof Sweatshirt" />
               <div>
                 <strong>OrbitProof Sweatshirt</strong>
                 <small>White · Qty 1</small>
@@ -108,127 +78,72 @@ function App() {
           </div>
         </section>
 
-        <section className="reference">
-          <span>Built for the WebMCP Challenge</span>
-          <strong>Vercel Shop + Shopify WebMCP</strong>
-          <a href="https://github.com/vercel/shop" target="_blank" rel="noreferrer">
-            View source ↗
-          </a>
-        </section>
-
-        <section id="webmcp" className="webmcp">
-          <header>
-            <p className="kicker">What is WebMCP?</p>
-            <h2>A new open standard for agent-ready websites.</h2>
-            <p className="subhead">
-              WebMCP lets a web page register structured tools — names, natural-language descriptions, and JSON input schemas — so browser agents can discover and call them reliably instead of guessing through buttons and forms.
-            </p>
-          </header>
-
-          <div className="webmcp-grid">
-            <article>
-              <span className="icon"><ToolsIcon /></span>
-              <h3>Typed tools, not scraped DOM</h3>
-              <p>
-                A page exposes <code>search_products</code>, <code>update_cart</code>, or <code>checkout</code> as first-class tools. The agent knows exactly what each feature does and what inputs it expects.
-              </p>
-            </article>
-            <article>
-              <span className="icon"><GlobeIcon /></span>
-              <h3>Agent + person, same interface</h3>
-              <p>
-                Tasks happen inside the normal UI the user already trusts. The agent calls the same JavaScript functions the page uses, so results appear exactly where people expect them.
-              </p>
-            </article>
-            <article>
-              <span className="icon"><ShieldIcon /></span>
-              <h3>Browser-mediated trust</h3>
-              <p>
-                The browser arbitrates which tools are visible, handles permissions, and keeps execution on the page — no headless browser or fragile DOM scraping required.
-              </p>
-            </article>
-          </div>
-
-          <div className="webmcp-links">
-            <a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noreferrer">
-              Read the WebMCP spec ↗
-            </a>
-            <a href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="noreferrer">
-              WebMCP explainer ↗
-            </a>
-            <a href="https://webmcp.devpost.com/" target="_blank" rel="noreferrer">
-              The WebMCP Challenge ↗
-            </a>
+        <section className="section section--narrow" id="webmcp">
+          <p className="section-label">What is WebMCP?</p>
+          <h2>A new open standard for agent-ready websites.</h2>
+          <p>
+            WebMCP lets a web page register structured tools — names, natural-language descriptions, and JSON input schemas — so browser agents can discover and call them reliably instead of guessing through buttons and forms.
+          </p>
+          <p>
+            The browser arbitrates which tools are visible, keeps execution on the page, and lets tasks happen inside the normal UI the user already trusts. A page can expose <code>search_products</code>, <code>update_cart</code>, or <code>checkout</code> as first-class tools, each with explicit inputs and expected outputs.
+          </p>
+          <div className="link-row">
+            <a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noreferrer">WebMCP spec ↗</a>
+            <a href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="noreferrer">Explainer ↗</a>
+            <a href="https://webmcp.devpost.com/" target="_blank" rel="noreferrer">WebMCP Challenge ↗</a>
           </div>
         </section>
 
-        <section id="product" className="product">
-          <header>
-            <p className="kicker">The human job</p>
-            <h2>Notice. Understand. Reverse. Verify.</h2>
-            <p>Recovery belongs where the mistake becomes visible — not in a developer dashboard or another chat thread.</p>
-          </header>
-          <div className="job-grid">
-            <article>
-              <b>01</b>
-              <h3>Notice</h3>
-              <p>The normal cart opens after the agent changes it. The total makes the problem obvious.</p>
-            </article>
-            <article>
-              <b>02</b>
-              <h3>Understand</h3>
-              <p>Rewind explains who changed what and why the result violated the original request.</p>
-            </article>
-            <article>
-              <b>03</b>
-              <h3>Reverse</h3>
-              <p>One contextual Undo restores the state from immediately before the agent action.</p>
-            </article>
-            <article>
-              <b>04</b>
-              <h3>Verify</h3>
-              <p>The restored cart is visible instantly; the reverted action remains in the audit history.</p>
-            </article>
-          </div>
+        <section className="section section--narrow" id="why">
+          <p className="section-label">Why this project</p>
+          <h2>A wrong agent action needs a human undo.</h2>
+          <p>
+            The WebMCP Challenge asked what becomes possible when people and their agents use the web together. We built Rewind to answer the recovery side of that question: once an agent can change your cart, your labels, or your settings, a mistake becomes a real user problem.
+          </p>
+          <p>
+            Today the only “undo” is another prompt — and that often makes things worse. Rewind gives every WebMCP product Git-style recovery: record silently at the mutation boundary, surface the change where it happens, and let people roll back with one click. The host UI stays unchanged until something goes wrong.
+          </p>
+          <ul className="plain-list">
+            <li>One-click rollback at the point of impact</li>
+            <li>Full audit trail and branch-on-retry</li>
+            <li>Works without changing the host UI</li>
+          </ul>
         </section>
 
-        <section className="why">
-          <div className="why-card">
-            <p className="kicker">Why this project</p>
-            <h2>Because a wrong agent action needs a human undo.</h2>
-            <p>
-              The WebMCP Challenge asked what becomes possible when people and their agents use the web together. We built Rewind to answer the recovery side of that question: the moment an agent can change your cart, your labels, or your settings, a mistake becomes a real user problem. Today the only “undo” is another prompt — and that can make things worse.
-            </p>
-            <p>
-              Rewind gives every WebMCP product Git-style recovery: record silently at the mutation boundary, surface the change where it happens, and let people roll back with one click. No host UI changes needed until something goes wrong.
-            </p>
-            <ul>
-              <li><RotateCcw size={15} /> One-click rollback at the point of impact</li>
-              <li><GitBranch size={15} /> Full audit trail and branch-on-retry</li>
-              <li><History size={15} /> Works without changing the host UI</li>
-            </ul>
-          </div>
+        <section className="section section--narrow" id="how">
+          <p className="section-label">How it works</p>
+          <h2>Notice, understand, reverse, verify.</h2>
+          <ol className="steps">
+            <li>
+              <b>Notice.</b> The normal cart opens after the agent changes it. The total makes the problem obvious.
+            </li>
+            <li>
+              <b>Understand.</b> Rewind explains who changed what and why the result violated the original request.
+            </li>
+            <li>
+              <b>Reverse.</b> One contextual Undo restores the state from immediately before the agent action.
+            </li>
+            <li>
+              <b>Verify.</b> The restored cart is visible instantly; the reverted action remains in the audit history.
+            </li>
+          </ol>
         </section>
 
-        <section id="sdk" className="sdk">
-          <div>
-            <p className="kicker">The SDK</p>
+        <section className="section sdk" id="sdk">
+          <div className="section-text">
+            <p className="section-label">The SDK</p>
             <h2>Record at the mutation boundary.</h2>
             <p>
               Rewind sits underneath the interface. Each mutating WebMCP tool creates a commit with before state, after state, effects, and a deterministic hash. The host product decides where contextual Undo appears.
             </p>
-            <ul>
-              <li><History size={15} /> Background action history</li>
-              <li><RotateCcw size={15} /> Snapshot restore</li>
-              <li><GitBranch size={15} /> Branch-on-retry audit trail</li>
+            <ul className="plain-list">
+              <li>Background action history</li>
+              <li>Snapshot restore</li>
+              <li>Branch-on-retry audit trail</li>
             </ul>
-            <div className="sdk-cta">
-              <a className="secondary" href="/sdk/rewind-sdk.mjs" download>
-                Download ESM bundle ↓
-              </a>
-              <a href="https://github.com/aliabdulkadirali/rewind-webmcp" target="_blank" rel="noreferrer">
-                View on GitHub ↗
-              </a>
+            <div className="link-row">
+              <a href="/sdk/rewind-sdk.mjs" download>Download ESM bundle ↓</a>
+              <a href="https://github.com/aliabdulkadirali/rewind-webmcp" target="_blank" rel="noreferrer">View on GitHub ↗</a>
             </div>
           </div>
           <pre>
@@ -248,15 +163,11 @@ await rewind.connectWebMCP();`}</code>
           </pre>
         </section>
 
-        <section className="close">
-          <span><LedgerMark /></span>
-          <h2>
-            Agents move fast.
-            <br />
-            People keep a way back.
-          </h2>
-          <a href="/examples/catalog/">
-            Try the recovery flow <ArrowRight size={15} />
+        <section className="section section--narrow close">
+          <p className="section-label">Try it</p>
+          <h2>Agents move fast. People keep a way back.</h2>
+          <a className="button" href="/examples/catalog/">
+            Try the recovery flow <ArrowRight size={14} />
           </a>
         </section>
       </main>
@@ -266,7 +177,7 @@ await rewind.connectWebMCP();`}</code>
           <span><LedgerMark /></span>
           Rewind
         </a>
-        <p>Hackathon prototype · MIT licensed</p>
+        <p>Built for the WebMCP Challenge · MIT licensed</p>
       </footer>
     </div>
   );

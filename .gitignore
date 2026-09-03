@@ -18,3 +18,6 @@ AGENTS.md
 
 # Local Netlify folder
 .netlify
+
+# Vercel
+.vercel

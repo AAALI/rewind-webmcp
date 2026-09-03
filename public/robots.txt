@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://rewind-webmcp.netlify.app/sitemap.txt
+Sitemap: https://rewind-webmcp.vercel.app/sitemap.txt
