@@ -1,0 +1,24 @@
+{
+  "name": "@rewind/webmcp",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Background Git-style commits, restore, and branching for WebMCP tools.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./panel": {
+      "types": "./dist/panel.d.ts",
+      "import": "./dist/panel.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}
