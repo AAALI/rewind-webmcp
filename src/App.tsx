@@ -1,7 +1,7 @@
 import { ArrowRight, GitBranch, History, RotateCcw } from 'lucide-react';
 import './styles.css';
 
-const LedgerMark = () => <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5h6M5 10h10M5 15.5h6"/><circle cx="3" cy="4.5" r="1"/><circle cx="17" cy="15.5" r="1"/></svg>;
+const LedgerMark = () => <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"><path d="M5 4.5h6M5 10h10M5 15.5h6"/><circle cx="3" cy="4.5" r="1.2" fill="#fff" stroke="none"/><circle cx="17" cy="15.5" r="1.2" fill="#fff" stroke="none"/></svg>;
 
 function App() {
   return <div className="site">
