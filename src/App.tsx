@@ -40,24 +40,24 @@ function App() {
             <a href="#webmcp">Read about WebMCP</a>
           </div>
           <p className="hero-note">
-            Use a WebMCP-enabled browser. In Chrome 146+, enable <code>chrome://flags/#enable-webmcp-testing</code> and relaunch.
+            Use a WebMCP-enabled browser. In Chrome 149+, enable <code>chrome://flags/#enable-webmcp-testing</code> and relaunch.
           </p>
 
           <div className="recovery-preview">
             <div className="preview-head">
-              <strong>Your cart</strong>
-              <span>8 items</span>
+              <strong>Recovery example</strong>
+              <span>2 items</span>
             </div>
             <div className="problem">
               <span>!</span>
               <div>
-                <strong>This doesn’t match your request</strong>
-                <small>Agent added 8 items · $789.00</small>
+                <strong>Agent changed your cart</strong>
+                <small>Agent added 2 items · $258.00</small>
               </div>
               <p>
-                Your $200 budget was exceeded by <b>$589.00</b>.
+                Changed your mind? Restore the previous cart in one click.
               </p>
-              <button>Undo agent changes</button>
+              <button onClick={() => { window.location.href = "/examples/catalog/"; }}>Try Undo in the demo</button>
             </div>
             <div className="line">
               <img src="https://cdn.shopify.com/s/files/1/0748/3002/0662/files/briskrun-jacket-unisex-88b464-main-grey.png?v=1787661204" alt="BriskRun Jacket" />
@@ -143,19 +143,24 @@ function App() {
             </ul>
             <div className="link-row">
               <a href="/sdk/rewind-sdk.mjs" download>Download ESM bundle ↓</a>
-              <a href="https://github.com/aliabdulkadirali/rewind-webmcp" target="_blank" rel="noreferrer">View on GitHub ↗</a>
+              <a href="https://github.com/AAALI/rewind-webmcp" target="_blank" rel="noreferrer">View on GitHub ↗</a>
             </div>
           </div>
           <pre>
-            <code>{`npm install @rewind/webmcp
-
-import { createRewindEngine, mountRewindPanel } from "@rewind/webmcp";
+            <code>{`// Hosted ESM bundle — no npm install required
+import { createRewindEngine, mountRewindPanel }
+  from "https://rewind-webmcp.vercel.app/sdk/rewind-sdk.mjs";
 
 const rewind = createRewindEngine({ initialState });
 
 rewind.registerMutation({
   name: "update_cart",
-  mutate: updateShopifyCart
+  description: "Replace the demo cart",
+  inputSchema: { type: "object" },
+  mutate: (state, input) => ({
+    state: { ...state, cart: input.items },
+    summary: "Updated demo cart"
+  })
 });
 
 mountRewindPanel(rewind, document.querySelector("#rewind"));

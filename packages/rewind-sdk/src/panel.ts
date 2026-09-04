@@ -29,8 +29,8 @@ function drawerMarkup<TState>(session: RewindSession<TState>, selected: RewindCo
   const protectedCount = tools.filter((tool) => tool.coverage === 'tracked').length;
   return `<div class="rw-backdrop" data-rw-close></div><aside class="rw-drawer" aria-label="WebMCP action history">
     <header><div class="rw-logo">${historyIcon}</div><div><strong>${escapeHtml(title)}</strong><span>WebMCP action ledger</span></div><button data-rw-close aria-label="Close history">×</button></header>
-    <div class="rw-status"><span><i></i> ${tools.length} tools found · ${protectedCount} protected</span><code>HEAD ${escapeHtml(session.head)}</code></div>
-    <section class="rw-tools"><div class="rw-label"><span>WebMCP tools</span><em>live inventory</em></div><div>${tools.map((tool) => `<article><code>${escapeHtml(tool.name)}</code><span>${tool.readOnly ? 'read' : 'action'}</span><b class="${tool.coverage}">${tool.coverage === 'tracked' ? 'logged' : 'discovered'}</b></article>`).join('') || '<p>Waiting for WebMCP tools…</p>'}</div></section>
+    <div class="rw-status"><span><i></i> ${tools.length} tools found · ${protectedCount} integrated</span><code>HEAD ${escapeHtml(session.head)}</code></div>
+    <section class="rw-tools"><div class="rw-label"><span>WebMCP tools</span><em>live inventory</em></div><div>${tools.map((tool) => `<article><code>${escapeHtml(tool.name)}</code><span>${tool.readOnly ? 'read' : 'action'}</span><b class="${tool.coverage}">${tool.coverage !== 'tracked' ? 'discovered' : tool.readOnly ? 'read-only' : tool.name === 'rewind_restore' ? 'restore' : 'recorded'}</b></article>`).join('') || '<p>Waiting for WebMCP tools…</p>'}</div></section>
     <section class="rw-list"><div class="rw-label"><span>Recent actions</span><em>${commits.length} recorded</em></div>${commits.length ? [...commits].reverse().map((commit) => {
       const branch = branches.get(commit.branchId)!;
       return `<button class="rw-commit ${selected.id === commit.id ? 'selected' : ''}" data-rw-select="${commit.id}"><span class="rw-node" style="--rw-color:${branch.color}"><i></i></span><span><small>${escapeHtml(relativeTime(commit.createdAt))} · <code>${commit.id}</code></small><strong>${escapeHtml(commit.summary)}</strong><em>${escapeHtml(commit.toolName)}</em></span><b>${escapeHtml(branch.name)}</b></button>`;
@@ -50,7 +50,7 @@ export function mountRewindPanel<TState>(engine: RewindEngine<TState>, container
     const selected = session.commits.find((commit) => commit.id === selectedId) ?? session.commits[0];
     const count = session.commits.filter((commit) => commit.actor === 'agent').length;
     container.innerHTML = `<style>${PANEL_CSS}</style><div class="rw-root"><button class="rw-launcher" data-rw-open aria-label="Open WebMCP action history"><span>${historyIcon}</span><strong>Action log</strong>${count ? `<em>${count}</em>` : ''}</button>${open ? drawerMarkup(session, selected, options.title ?? 'Rewind', tools) : ''}</div>`;
-    container.querySelector<HTMLButtonElement>('[data-rw-open]')?.addEventListener('click', () => { open = true; render(engine.getSession()); });
+    container.querySelector<HTMLButtonElement>('[data-rw-open]')?.addEventListener('click', () => { selectedId = engine.getSession().head; open = true; render(engine.getSession()); });
     container.querySelectorAll<HTMLElement>('[data-rw-close]').forEach((element) => element.addEventListener('click', () => { open = false; render(engine.getSession()); }));
     container.querySelectorAll<HTMLButtonElement>('[data-rw-select]').forEach((button) => button.addEventListener('click', () => { selectedId = button.dataset.rwSelect!; render(engine.getSession()); }));
     container.querySelector<HTMLButtonElement>('[data-rw-rewind]')?.addEventListener('click', () => {

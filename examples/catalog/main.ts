@@ -1,6 +1,6 @@
 import { mountRewindPanel } from '@rewind/webmcp';
 import { runCopilot, type CopilotStep } from './copilot';
-import { collections, countFor, money, productFor, products, totalFor, type Product, type ShopState } from './store';
+import { collections, countFor, matchesProductQuery, money, productFor, products, totalFor, type Product, type ShopState } from './store';
 import { connectShopTools, rewind, type ShopDestination } from './webmcp';
 import './styles.css';
 import './experience.css';
@@ -14,7 +14,7 @@ let assistantMode: 'search' | 'chat' = 'search';
 let smartOpen = true;
 let copilotOpen = false;
 let copilotBusy = false;
-let recovered = false;
+let recoveredHead: string | null = null;
 let toolCount = 0;
 let latestOutcome: CopilotStep | null = null;
 let steps: CopilotStep[] = [{ role: 'agent', text: 'I can use this shop’s WebMCP tools. What would you like me to do?' }];
@@ -32,10 +32,11 @@ function navigate(destination: ShopDestination) {
 }
 
 function undoLastAgentAction() {
-  const last = [...rewind.getSession().commits].reverse().find((commit) => commit.actor === 'agent' && commit.toolName !== 'session_init');
-  if (!last) return;
+  const session = rewind.getSession();
+  const last = session.commits.find((commit) => commit.id === session.head);
+  if (!last?.parentId || session.current.lastChangedBy !== 'agent') return;
   rewind.rewindBefore(last.id);
-  recovered = true;
+  recoveredHead = rewind.getSession().head;
   cartOpen = true;
   render();
 }
@@ -53,7 +54,7 @@ async function submitPrompt(prompt: string) {
   if (!clean || copilotBusy) return;
   steps = [...steps, { role: 'user', text: clean }];
   copilotBusy = true;
-  recovered = false;
+  recoveredHead = null;
   render();
   try {
     const state = rewind.getSession().current;
@@ -73,6 +74,7 @@ async function submitPrompt(prompt: string) {
     const failure: CopilotStep = { role: 'agent', text: error instanceof Error ? error.message : 'The tool call failed.' };
     steps = [...steps, failure];
     latestOutcome = failure;
+    if (assistantMode === 'search') smartOpen = false;
   }
   copilotBusy = false;
   render();
@@ -90,7 +92,7 @@ function catalogMarkup() {
   const collection = view.page === 'catalog' ? view.collection ?? 'All' : 'All';
   const query = view.page === 'catalog' ? view.query?.toLowerCase() ?? '' : '';
   const maxPrice = view.page === 'catalog' ? view.maxPrice : undefined;
-  const matches = products.filter((product) => (collection === 'All' || product.category === collection) && `${product.name} ${product.color} ${product.category}`.toLowerCase().includes(query) && (maxPrice === undefined || product.price <= maxPrice));
+  const matches = products.filter((product) => (collection === 'All' || product.category === collection) && matchesProductQuery(product, query) && (maxPrice === undefined || product.price <= maxPrice));
   const resultTitle = query ? `Results for “${escapeHtml(query)}”` : maxPrice !== undefined ? `Products under ${money(maxPrice).replace('.00', '')}` : escapeHtml(collection);
   return `<main class="listing-page"><header><small>SHOP / ${escapeHtml(query || maxPrice !== undefined ? 'AI RESULTS' : collection.toUpperCase())}</small><h1>${resultTitle}</h1><p>${matches.length} ${matches.length === 1 ? 'product' : 'products'}</p></header><nav class="collection-nav">${collections.map((item) => `<button class="${item === collection && !query && maxPrice === undefined ? 'active' : ''}" data-collection="${item}">${item}</button>`).join('')}</nav>${matches.length ? productGrid(matches) : '<div class="no-results"><strong>No products found</strong><p>Try a color, product type, or a broader search.</p></div>'}</main>`;
 }
@@ -103,7 +105,7 @@ function productMarkup() {
 
 function checkoutMarkup(state: ShopState) {
   if (!state.cart.length) return `<main class="empty-page"><small>CHECKOUT</small><h1>Your cart is empty.</h1><button data-collection="All">Continue shopping</button></main>`;
-  return `<main class="checkout-page"><section><button class="checkout-logo" data-home>Vercel Shop</button><div class="checkout-steps"><b>Information</b><span>›</span><span>Shipping</span><span>›</span><span>Payment</span></div><form><h2>Contact</h2><input placeholder="Email or mobile phone number"><label><input type="checkbox"> Email me with news and offers</label><h2>Delivery</h2><select><option>United Arab Emirates</option></select><div><input placeholder="First name"><input placeholder="Last name"></div><input placeholder="Address"><div><input placeholder="City"><input placeholder="Postal code"></div><button type="button">Continue to shipping</button></form></section><aside>${state.cart.map((line) => { const product = productFor(line.productId); return `<article><div><img src="${product.image}" alt=""><i>${line.quantity}</i></div><span><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.color)} / ${escapeHtml(line.size ?? 'M')}</small></span><b>${money(product.price * line.quantity)}</b></article>`; }).join('')}<div class="checkout-total"><p><span>Subtotal</span><b>${money(totalFor(state.cart))}</b></p><p><span>Shipping</span><b>Calculated next</b></p><p><strong>Total</strong><strong>${money(totalFor(state.cart))}</strong></p></div></aside></main>`;
+  return `<main class="checkout-page"><section><button class="checkout-logo" data-home>Vercel Shop</button><div class="checkout-steps"><b>Information</b><span>›</span><span>Shipping</span><span>›</span><span>Payment</span></div><form><p>Demo checkout only. No payment or order will be placed. Do not enter personal details.</p><h2>Contact</h2><input placeholder="Email or mobile phone number"><label><input type="checkbox"> Email me with news and offers</label><h2>Delivery</h2><select><option>United Arab Emirates</option></select><div><input placeholder="First name"><input placeholder="Last name"></div><input placeholder="Address"><div><input placeholder="City"><input placeholder="Postal code"></div><button type="button">Continue to shipping</button></form></section><aside>${state.cart.map((line) => { const product = productFor(line.productId); return `<article><div><img src="${product.image}" alt=""><i>${line.quantity}</i></div><span><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.color)} / ${escapeHtml(line.size ?? 'M')}</small></span><b>${money(product.price * line.quantity)}</b></article>`; }).join('')}<div class="checkout-total"><p><span>Subtotal</span><b>${money(totalFor(state.cart))}</b></p><p><span>Shipping</span><b>Calculated next</b></p><p><strong>Total</strong><strong>${money(totalFor(state.cart))}</strong></p></div></aside></main>`;
 }
 
 function ordersMarkup() {
@@ -120,9 +122,9 @@ function pageMarkup(state: ShopState) {
 
 function cartMarkup(state: ShopState) {
   const total = totalFor(state.cart);
-  const overBudget = Math.max(0, total - state.budget);
+  const recovered = rewind.getSession().head === recoveredHead;
   const agentChanged = state.lastChangedBy === 'agent' && !recovered;
-  return `<div class="cart-backdrop ${cartOpen ? 'visible' : ''}" data-close-cart></div><aside class="cart-drawer ${cartOpen ? 'open' : ''}" aria-label="Cart"><header><div><strong>Your cart</strong><small>${countFor(state.cart)} ${countFor(state.cart) === 1 ? 'item' : 'items'}</small></div><button data-close-cart aria-label="Close cart">×</button></header>${agentChanged ? `<section class="impact-alert ${overBudget ? '' : 'neutral'}"><div class="impact-title"><span>${overBudget ? '!' : '✓'}</span><div><strong>${overBudget ? 'This doesn’t match your request' : 'Agent changed your cart'}</strong><small>${countFor(state.cart)} items · ${money(total)}</small></div></div><p>${overBudget ? `Your budget was ${money(state.budget)}. This cart is <b>${money(overBudget)} over budget</b>.` : 'You can undo the complete agent action without sending another prompt.'}</p><div class="recovery-actions"><button class="undo" data-undo>Undo agent changes</button><button data-review>View action</button></div></section>` : ''}${recovered ? `<section class="restored"><span>✓</span><div><strong>Cart restored</strong><small>The action remains in the WebMCP log.</small></div><button data-review>View</button></section>` : ''}<section class="cart-lines">${state.cart.length ? state.cart.map((line) => { const product = productFor(line.productId); return `<article><img src="${product.image}" alt=""><div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.color)} · ${escapeHtml(line.size ?? 'M')} · Qty ${line.quantity}</small><button data-remove="${product.id}">Remove</button></div><b>${money(product.price * line.quantity)}</b></article>`; }).join('') : `<div class="empty-cart"><span>□</span><strong>Your cart is empty</strong><p>Items you add will appear here.</p></div>`}</section><footer><div><span>Subtotal</span><strong>${money(total)}</strong></div><p>Taxes and shipping calculated at checkout</p><button data-checkout ${state.cart.length ? '' : 'disabled'}>Checkout</button></footer></aside>`;
+  return `<div class="cart-backdrop ${cartOpen ? 'visible' : ''}" data-close-cart></div><aside class="cart-drawer ${cartOpen ? 'open' : ''}" aria-label="Cart"><header><div><strong>Your cart</strong><small>${countFor(state.cart)} ${countFor(state.cart) === 1 ? 'item' : 'items'}</small></div><button data-close-cart aria-label="Close cart">×</button></header>${agentChanged ? `<section class="impact-alert neutral"><div class="impact-title"><span>✓</span><div><strong>Agent changed your cart</strong><small>${countFor(state.cart)} items · ${money(total)}</small></div></div><p>You can undo the latest agent action without sending another prompt.</p><div class="recovery-actions"><button class="undo" data-undo>Undo agent changes</button><button data-review>View action</button></div></section>` : ''}${recovered ? `<section class="restored"><span>✓</span><div><strong>Cart restored</strong><small>The action remains in the WebMCP log.</small></div><button data-review>View</button></section>` : ''}<section class="cart-lines">${state.cart.length ? state.cart.map((line) => { const product = productFor(line.productId); return `<article><img src="${product.image}" alt=""><div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.color)} · ${escapeHtml(line.size ?? 'M')} · Qty ${line.quantity}</small><button data-remove="${product.id}">Remove</button></div><b>${money(product.price * line.quantity)}</b></article>`; }).join('') : `<div class="empty-cart"><span>□</span><strong>Your cart is empty</strong><p>Items you add will appear here.</p></div>`}</section><footer><div><span>Subtotal</span><strong>${money(total)}</strong></div><p>Taxes and shipping calculated at checkout</p><button data-checkout ${state.cart.length ? '' : 'disabled'}>Checkout</button></footer></aside>`;
 }
 
 function modeSwitchMarkup() {
@@ -173,7 +175,7 @@ function attachEvents() {
 
 function render() {
   const state = rewind.getSession().current;
-  app.innerHTML = `<div class="shop"><aside class="webmcp-notice"><strong>Run this demo in a WebMCP-enabled browser.</strong><span>Chrome 146+: open <code>chrome://flags/#enable-webmcp-testing</code>, choose Enabled, then relaunch Chrome.</span></aside><div class="announcement">Free worldwide delivery on orders over $100</div><header class="nav"><button class="wordmark" data-home>Vercel Shop</button><nav><button data-collection="All">Shop</button><button data-collection="Outerwear">Outerwear</button><button data-collection="Tops">Tops</button></nav><form class="nav-search"><input aria-label="Search products" placeholder="Search products" value="${view.page === 'catalog' ? escapeHtml(view.query ?? '') : ''}"><button aria-label="Submit search">⌕</button></form><div class="webmcp-status"><i></i>WebMCP · ${toolCount}</div><div class="nav-actions"><button data-orders aria-label="Orders">Account</button><button class="cart-button" data-cart aria-label="Cart">Bag ${countFor(state.cart) ? `<i>${countFor(state.cart)}</i>` : ''}</button></div></header>${pageMarkup(state)}<footer class="site-foot"><div><strong>Vercel Shop</strong><span>High-performance commerce for the agentic web.</span></div><nav><button data-collection="All">Shop</button><button data-orders>Orders</button><a href="https://github.com/vercel/shop" target="_blank" rel="noreferrer">Official Vercel Shop ↗</a></nav></footer>${cartMarkup(state)}${assistantMarkup()}</div>`;
+  app.innerHTML = `<div class="shop"><aside class="webmcp-notice"><strong>Run this demo in a WebMCP-enabled browser.</strong><span>Chrome 149+: open <code>chrome://flags/#enable-webmcp-testing</code>, choose Enabled, then relaunch Chrome.</span></aside><div class="announcement">Free worldwide delivery on orders over $100</div><header class="nav"><button class="wordmark" data-home>Vercel Shop</button><nav><button data-collection="All">Shop</button><button data-collection="Outerwear">Outerwear</button><button data-collection="Tops">Tops</button></nav><form class="nav-search"><input aria-label="Search products" placeholder="Search products" value="${view.page === 'catalog' ? escapeHtml(view.query ?? '') : ''}"><button aria-label="Submit search">⌕</button></form><div class="webmcp-status"><i></i>WebMCP · ${toolCount}</div><div class="nav-actions"><button data-orders aria-label="Orders">Account</button><button class="cart-button" data-cart aria-label="Cart">Bag ${countFor(state.cart) ? `<i>${countFor(state.cart)}</i>` : ''}</button></div></header>${pageMarkup(state)}<footer class="site-foot"><div><strong>Vercel Shop</strong><span>High-performance commerce for the agentic web.</span></div><nav><button data-collection="All">Shop</button><button data-orders>Orders</button><a href="https://github.com/vercel/shop" target="_blank" rel="noreferrer">Official Vercel Shop ↗</a></nav></footer>${cartMarkup(state)}${assistantMarkup()}</div>`;
   attachEvents();
 }
 

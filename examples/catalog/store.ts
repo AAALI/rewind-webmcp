@@ -16,6 +16,11 @@ export const products: Product[] = [
 
 export const collections = ['All', 'Outerwear', 'Sweats', 'Tops'];
 
+export function matchesProductQuery(product: Product, query: string) {
+  const text = `${product.name} ${product.color} ${product.category}`.toLowerCase();
+  return query.toLowerCase().trim().split(/\s+/).filter(Boolean).every((word) => text.includes(word));
+}
+
 export const initialState: ShopState = { cart: [], budget: 200, lastChangedBy: 'shopper' };
 export const productFor = (id: string) => products.find((product) => product.id === id)!;
 export const totalFor = (cart: CartLine[]) => cart.reduce((sum, line) => sum + productFor(line.productId).price * line.quantity, 0);

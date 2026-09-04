@@ -1,5 +1,5 @@
 import { createRewindEngine, localStoragePersistence } from '@rewind/webmcp';
-import { countFor, initialState, productFor, products, totalFor, type ShopState } from './store';
+import { countFor, initialState, matchesProductQuery, productFor, products, totalFor, type ShopState } from './store';
 
 export type ShopDestination =
   | { page: 'home' }
@@ -22,7 +22,7 @@ rewind.registerReadTool({
   read: (_state, input) => {
     const query = String(input.query ?? '').toLowerCase();
     const maximum = Number(input.max_price ?? Number.POSITIVE_INFINITY);
-    const matches = products.filter((product) => `${product.name} ${product.color} ${product.category}`.toLowerCase().includes(query) && product.price <= maximum);
+    const matches = products.filter((product) => matchesProductQuery(product, query) && product.price <= maximum);
     if (input.navigate === true) navigateShop({ page: 'catalog', query, maxPrice: Number.isFinite(maximum) ? maximum : undefined });
     return matches;
   },
@@ -78,19 +78,30 @@ rewind.registerMutation({
   description: 'Replace the shopper cart with requested product quantities. This action is logged and reversible.',
   inputSchema: {
     type: 'object',
-    properties: { items: { type: 'array', items: { type: 'object', properties: { product_id: { type: 'string' }, quantity: { type: 'number' }, size: { type: 'string', enum: ['XS', 'S', 'M', 'L', 'XL'] } }, required: ['product_id', 'quantity'] } } },
+    properties: { items: { type: 'array', items: { type: 'object', properties: { product_id: { type: 'string' }, quantity: { type: 'integer', minimum: 1, maximum: 99 }, size: { type: 'string', enum: ['XS', 'S', 'M', 'L', 'XL'] } }, required: ['product_id', 'quantity'] } } },
     required: ['items'],
   },
   risk: 'medium',
   mutate: (state, input) => {
-    const raw = Array.isArray(input.items) ? input.items : [];
-    const cart = raw.map((item) => {
+    if (!Array.isArray(input.items)) throw new Error('items must be an array. Use [] to clear the cart.');
+    const seen = new Set<string>();
+    const cart = input.items.map((item) => {
+      if (!item || typeof item !== 'object') throw new Error('Each cart item must be an object.');
       const value = item as Record<string, unknown>;
-      return { productId: String(value.product_id), quantity: Math.max(1, Number(value.quantity ?? 1)), size: String(value.size ?? 'M') };
-    }).filter((line) => products.some((product) => product.id === line.productId));
+      const productId = String(value.product_id);
+      const quantity = value.quantity;
+      const size = String(value.size ?? 'M');
+      if (!products.some((product) => product.id === productId)) throw new Error(`Unknown product: ${productId}`);
+      if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) throw new Error('Quantity must be an integer from 1 to 99.');
+      if (!['XS', 'S', 'M', 'L', 'XL'].includes(size)) throw new Error(`Invalid size: ${size}`);
+      const key = `${productId}:${size}`;
+      if (seen.has(key)) throw new Error('Combine duplicate product/size lines into one quantity.');
+      seen.add(key);
+      return { productId, quantity, size };
+    });
     return {
       state: { ...state, cart, lastChangedBy: input.source === 'shopper' ? 'shopper' : 'agent' },
-      summary: `Agent changed cart from ${countFor(state.cart)} to ${countFor(cart)} items`,
+      summary: `${input.source === 'shopper' ? 'Shopper' : 'Agent'} changed cart from ${countFor(state.cart)} to ${countFor(cart)} items`,
       effects: [
         { label: 'Cart items', kind: 'changed', before: countFor(state.cart), after: countFor(cart), count: cart.length },
         { label: 'Cart total', kind: 'changed', before: `$${totalFor(state.cart)}`, after: `$${totalFor(cart)}` },
@@ -106,7 +117,7 @@ rewind.registerMutation({
   risk: 'medium',
   mutate: (state, input) => ({
     state: { ...state, cart: [], lastChangedBy: input.source === 'shopper' ? 'shopper' : 'agent' },
-    summary: `Agent cleared ${countFor(state.cart)} cart items`,
+    summary: `${input.source === 'shopper' ? 'Shopper' : 'Agent'} cleared ${countFor(state.cart)} cart items`,
     effects: [{ label: 'Cart items', kind: 'removed', before: countFor(state.cart), after: 0, count: state.cart.length }],
   }),
 });

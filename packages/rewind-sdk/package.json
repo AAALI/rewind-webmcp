@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aliabdulkadirali/rewind-webmcp.git",
+    "url": "git+https://github.com/AAALI/rewind-webmcp.git",
     "directory": "packages/rewind-sdk"
   },
   "homepage": "https://rewind-webmcp.vercel.app",
