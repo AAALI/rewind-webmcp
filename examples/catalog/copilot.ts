@@ -53,7 +53,13 @@ async function askPlanner(body: Record<string, unknown>): Promise<PlannerRespons
   return result;
 }
 
-export async function runCopilot(prompt: string, pageContext: CopilotPageContext): Promise<CopilotStep> {
+export type CopilotResult = CopilotStep & { responseId?: string };
+
+export async function runCopilot(
+  prompt: string,
+  pageContext: CopilotPageContext,
+  priorResponseId?: string,
+): Promise<CopilotResult> {
   const context = (document as Document & { modelContext?: ModelContext }).modelContext;
   if (!context?.getTools || !context.executeTool) {
     throw new Error('This browser does not expose in-page WebMCP discovery and execution.');
@@ -62,13 +68,14 @@ export async function runCopilot(prompt: string, pageContext: CopilotPageContext
   const tools = await context.getTools();
   const siteTools = tools.filter((tool) => !tool.name.startsWith('rewind_'));
   const usedTools: string[] = [];
-  let previousResponseId: string | undefined;
+  let previousResponseId: string | undefined = priorResponseId;
   let toolOutputs: Array<{ callId: string; output: string }> | undefined;
+  let sentUserTurn = false;
 
   for (let turn = 0; turn < 8; turn += 1) {
     const plan = await askPlanner({
-      prompt,
-      pageContext,
+      prompt: sentUserTurn ? undefined : prompt,
+      pageContext: sentUserTurn ? undefined : pageContext,
       tools: siteTools.map((tool) => ({
         name: tool.name,
         description: tool.description,
@@ -78,6 +85,7 @@ export async function runCopilot(prompt: string, pageContext: CopilotPageContext
       previousResponseId,
       toolOutputs,
     });
+    sentUserTurn = true;
     if (plan.error) throw new Error(plan.error);
 
     const calls = plan.calls ?? [];
@@ -86,6 +94,7 @@ export async function runCopilot(prompt: string, pageContext: CopilotPageContext
         role: 'agent',
         text: plan.text?.trim() || (usedTools.length ? 'Done.' : 'I need a little more detail to help with that.'),
         tools: usedTools,
+        responseId: plan.responseId,
       };
     }
 
@@ -113,5 +122,5 @@ export async function runCopilot(prompt: string, pageContext: CopilotPageContext
     }
   }
 
-  return { role: 'agent', text: 'I stopped after several tool steps so you stay in control.', tools: usedTools };
+  return { role: 'agent', text: 'I stopped after several tool steps so you stay in control.', tools: usedTools, responseId: previousResponseId };
 }

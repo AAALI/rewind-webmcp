@@ -18,6 +18,7 @@ let recoveredHead: string | null = null;
 let toolCount = 0;
 let latestOutcome: CopilotStep | null = null;
 let steps: CopilotStep[] = [{ role: 'agent', text: 'I can use this shop’s WebMCP tools. What would you like me to do?' }];
+let copilotResponseId: string | undefined;
 
 const escapeHtml = (value: unknown) => String(value ?? '')
   .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -65,9 +66,10 @@ async function submitPrompt(prompt: string) {
       selectedSize: currentProduct ? selectedSize : null,
       cart: state.cart,
       cartTotal: totalFor(state.cart),
-    });
-    steps = [...steps, response];
-    latestOutcome = response;
+    }, copilotResponseId);
+    copilotResponseId = response.responseId ?? copilotResponseId;
+    steps = [...steps, { role: response.role, text: response.text, tools: response.tools }];
+    latestOutcome = { role: response.role, text: response.text, tools: response.tools };
     if (assistantMode === 'search') smartOpen = false;
     if (response.tools?.includes('update_cart') || response.tools?.includes('cancel_cart')) cartOpen = true;
   } catch (error) {
