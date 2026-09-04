@@ -4,16 +4,16 @@ Git-style recovery for WebMCP products. Rewind is a small TypeScript SDK that si
 
 ## Demo
 
-- Live demo: https://rewind-webmcp.vercel.app/examples/catalog/
-- Landing page: https://rewind-webmcp.vercel.app/
-- Public source: https://github.com/AAALI/rewind-webmcp
+[![Watch the Rewind demo](./docs/demo-preview.png)](https://rewind-webmcp.vercel.app/rewind-demo.mp4)
+
+**[Watch the 67-second demo video](https://rewind-webmcp.vercel.app/rewind-demo.mp4)** · [Try the live storefront](https://rewind-webmcp.vercel.app/examples/catalog/) · [Visit the landing page](https://rewind-webmcp.vercel.app/)
 
 The live prototype uses the products and visual language of the hackathon's official [Vercel Shop](https://github.com/vercel/shop) example, which is backed by Shopify and Hydrogen. Ask the shop copilot to find products, choose a size, and update your cart. If the agent does something you didn’t ask for, the normal cart surfaces an **Undo agent changes** action that restores the previous state in one click. The reverted action remains in the audit history.
 
 This local prototype uses the official example's public product data with an in-browser cart so judges can test the recovery loop without credentials. A production fork needs Shopify storefront credentials and should record/compensate at Vercel Shop's cart mutation boundary; see [the integration note](./integrations/vercel-shop.md).
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -23,6 +23,13 @@ npm run dev
 For the complete local app, put `OPENAI_API_KEY` in an ignored `.env` file and run `npm run dev:full`. It serves the storefront and the same copilot handler used in production at `http://127.0.0.1:5174`. Credentials stay on the server. `npm run dev` serves only the storefront and external WebMCP tools; it does not run the AI endpoint.
 
 Do not open the example as a `file://` page; Vite must serve its TypeScript modules.
+
+## Documentation
+
+- [Contributing guide](./CONTRIBUTING.md) — setup, development workflow, deployment, and releases
+- [Architecture and maintenance guide](./docs/architecture.md) — state model, runtime flow, and compatibility contracts
+- [Vercel Shop integration](./integrations/vercel-shop.md) — the boundary required for real Shopify cart recovery
+- [SDK package guide](./packages/rewind-sdk/README.md) — minimal integration example
 
 ## SDK
 

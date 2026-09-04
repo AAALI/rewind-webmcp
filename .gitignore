@@ -1,6 +1,8 @@
 node_modules/
 dist/
 sdk-dist/
+artifacts/
+coverage/
 *.tsbuildinfo
 
 # Build artifacts generated from vite.config.ts
